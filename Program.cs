@@ -2,27 +2,23 @@
 
 while (true)
 {
-    Console.WriteLine("输入0或1，0创建教师，1创建学生，输入end停止");
+    Console.WriteLine("输入0或1，0创建教师，1创建学生；输入2删除，输入3修改信息，输入print打印结果，输入end停止");
     string? a = Console.ReadLine();
-    if (a?.ToLower() == "end")
-        break;
+
     try
     {
-    Judge(a);
-    PrintResult(people);
+        Judge(a, people);
     }
-    catch (Exception ex)
+    catch (InputException ex)
     {
         System.Console.WriteLine($"错误:{ex.Message}");
     }
 }
 
-void Judge(string? a)
+void Judge(string? a, List<School> people)
 {
-    if (string.IsNullOrWhiteSpace(a))
-    {
-        Console.WriteLine("输入不为空");
-    }
+    InputCheck(a);
+
     switch (a)
     {
         case "0":
@@ -31,9 +27,29 @@ void Judge(string? a)
         case "1":
             Add(people, member.Student);
             break;
+        case "2":
+            Remove(people);
+            break;
+        case "3":
+            ChangeName(people);
+            break;
+        case "print":
+            PrintResult(people);
+            break;
+        case "end":
+            Environment.Exit(0);
+            break;
         default:
             Console.WriteLine("输入错误");
             break;
+    }
+}
+
+static void InputCheck(String? input)
+{
+    if (string.IsNullOrWhiteSpace(input))
+    {
+        throw new InputException("输入不为空");
     }
 }
 
@@ -41,10 +57,9 @@ static void Add(List<School> people, member member)
 {
     System.Console.WriteLine($"输入{member}姓名：");
     var name = Console.ReadLine();
-    if (string.IsNullOrWhiteSpace(name))
-    {
-        throw new ArgumentException("姓名不能为空");
-    }
+
+    InputCheck(name);
+
     switch (member)
     {
         case member.Teacher:
@@ -53,18 +68,57 @@ static void Add(List<School> people, member member)
         case member.Student:
             System.Console.WriteLine("输入课程");
             var course = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(course))
-            {
-                throw new ArgumentNullException("课程不能为空");
-            }
+            InputCheck(course);
             people.Add(new Student(name, course));
             break;
     }
 }
 
+static void Remove(List<School> people)
+{
+    System.Console.WriteLine("输入删除的姓名");
+    var inputRemove = Console.ReadLine();
+
+    InputCheck(inputRemove);
+
+    var peopleRemove = people.FirstOrDefault(p => p.Name.Equals(inputRemove, StringComparison.OrdinalIgnoreCase));
+
+    if (peopleRemove == null)
+    {
+        System.Console.WriteLine($"不存在{inputRemove}");
+        return;
+    }
+
+    people.Remove(peopleRemove);
+    System.Console.WriteLine($"{peopleRemove.Name}已删除");
+}
+
+static void ChangeName(List<School> people)
+{
+    System.Console.WriteLine("输入要修改的名字");
+    var oldName = Console.ReadLine();
+
+    InputCheck(oldName);
+
+    var peopleChange = people.FirstOrDefault(p => p.Name.Equals(oldName,StringComparison.OrdinalIgnoreCase));
+
+    if(peopleChange == null)
+    {
+        System.Console.WriteLine($"{oldName}不存在");
+        return;
+    }
+
+    System.Console.WriteLine("输入新名字");
+    var newName = Console.ReadLine();
+    InputCheck(newName);
+
+    peopleChange.Name = newName;
+    System.Console.WriteLine("修改成功");
+}
+
 static void PrintResult(List<School> people)
 {
-    if (people == null || !people.Any())
+    if (people == null || people.Count == 0)
     {
         System.Console.WriteLine("没有内容");
         return;
@@ -151,4 +205,7 @@ public class Student : School
     public override string Type() => "学生";
 }
 
-
+public class InputException : Exception
+{
+    public InputException(string message) : base(message) { }
+}
